@@ -1,121 +1,182 @@
 # ClassPilot
 
-ClassPilot 是一個以繁體中文呈現的本機 STEAM 課堂管理作品集 MVP。它把學生、班級、註冊及每日出席流程整理成可操作的管理介面，方便在本機展示完整資料流程。
+ClassPilot 是一套 STEAM 課堂管理系統，協助管理學生、班級、學生註冊，以及每日出席紀錄。介面以繁體中文呈現，並可在桌面和窄螢幕上使用。
 
-## MVP 範圍
+## 功能
 
-- 學生管理：列表、新增、修改、刪除；學生資料按前端頁面分頁顯示。
-- 班級管理：列表、新增、修改、刪除；檢視學生名單、加入學生及取消註冊。
-- 出席管理：選擇班級與本機日期、新增及檢視紀錄、修改狀態／備註及刪除。
-- 後端提供 FastAPI／SQLModel API，PostgreSQL 儲存資料，Alembic 管理 schema。
-- 前端使用 React、TypeScript、Vite 和一般 CSS；桌面側欄在窄螢幕縮成精簡導覽。
+- **學生管理：** 新增、查看、修改及刪除學生資料。
+- **班級管理：** 建立與管理班級，查看班級內已註冊的學生。
+- **學生註冊：** 將學生加入班級，或取消註冊。
+- **出席管理：** 依班級和日期記錄出席、缺席、遲到或請假，並修改狀態和備註；取消註冊後仍保留出席歷史。
+- **響應式介面：** 繁體中文介面會依螢幕大小調整版面。
 
-這是本機展示 MVP，尚無身分驗證或權限保護，不可當作具有安全存取控制的公開服務。系統目前以「同一班級、同一學生、同一日期最多一筆」管理出席，不支援同日多節課或課堂場次。未登記的學生不會自動視為缺席。取消註冊會保留出席歷史；有註冊或出席歷史時，學生與班級的刪除會被拒絕。
+每位學生在同一班級、同一天最多有一筆出席紀錄。仍有註冊或出席紀錄的學生或班級不能刪除；先移除註冊或相關出席紀錄後才能刪除。
 
-## 技術架構
+## 技術
 
-- Backend：Python 3.12、FastAPI、SQLModel、Pydantic Settings、SQLAlchemy、psycopg、Alembic。
-- Database：PostgreSQL，開發庫 `steam_classroom_dev`、測試庫 `steam_classroom_test`。
-- Frontend：React、TypeScript、Vite、CSS variables。
-- Tests：pytest、FastAPI TestClient、httpx；前端提供 TypeScript 型別檢查及 Vite production build。
+| 分層 | 使用技術 |
+| --- | --- |
+| 前端 | React、TypeScript、Vite、CSS |
+| 後端 | Python 3.12、FastAPI、SQLModel |
+| 資料庫 | PostgreSQL、Alembic |
+| 測試與開發 | pytest、FastAPI TestClient、HTTPX、Conda、npm |
 
-## Windows PowerShell 設定
+## 安裝與啟動
 
-以下命令從專案根目錄 `D:\ProgramData\Codex Project\ClassPilot` 執行。後端使用既有 Conda 環境，不使用 base 或 `.venv`：
+系統包含前端、後端與 PostgreSQL；請先準備環境及資料庫，再分別啟動前端與後端。
+
+以下步驟以 Windows PowerShell 為例。除非另有說明，標示「專案根目錄」的命令都在剛 clone 下來的 `ClassPilot` 資料夾中執行。
+
+### 1. 安裝所需軟體
+
+請先安裝：
+
+- [Git for Windows](https://git-scm.com/install/windows)：下載專案及管理版本。專案未指定最低 Git 版本，使用官方目前提供的版本即可。
+- [Miniconda](https://www.anaconda.com/download)：建立專案專用的 Python 環境。無須另外安裝 Python；`environment.yml` 會在環境中安裝 Python 3.12。
+- [Node.js](https://nodejs.org/en/download)：執行前端開發及建置工具。Vite 8 要求 Node.js 20.19+ 或 22.12+；建議安裝官方提供的 Node.js 24 LTS。
+- [PostgreSQL for Windows](https://www.postgresql.org/download/windows/)：提供應用程式使用的資料庫。專案沒有指定 PostgreSQL 主版本，請使用 PostgreSQL 官方下載頁提供的正式版本。
+
+pgAdmin 是管理 PostgreSQL 的圖形介面，並非執行 ClassPilot 的必要元件。本指南用 pgAdmin 設定資料庫；若安裝 PostgreSQL 時未選裝 pgAdmin，請從 PostgreSQL for Windows 下載頁取得安裝程式並選裝它。
+
+安裝完成後開啟新的 PowerShell 視窗，確認工具可用：
+
+**執行位置：任意資料夾**
 
 ```powershell
-$steamPython = 'C:\Users\User\.conda\envs\steam-classroom\python.exe'
-& $steamPython --version
+git --version
+conda --version
+node --version
+npm --version
 ```
 
-專案根目錄 `.env` 由後端按絕對路徑載入。請在本機自行填寫資料庫密碼；不要把 `.env` 加入版本控制。測試設定必須指定 `POSTGRES_TEST_DB=steam_classroom_test`，不可改用開發庫。環境範本位於 [.env.example](.env.example)，前端範本位於 [frontend/.env.example](frontend/.env.example)，前端檔案只設定 API 位址，不放資料庫憑證。
+應看到各工具的版本資訊。Node.js 版本需符合上方 Vite 要求。
 
-首次使用時，在專案根目錄安裝前端本機依賴：
+### 2. 下載專案
+
+**執行位置：準備存放專案的資料夾**
+
+```powershell
+git clone https://github.com/Yau2004/ClassPilot.git
+cd ClassPilot
+```
+
+完成後，PowerShell 的目前路徑應以 `ClassPilot` 結尾，且能看到 `README.md`、`backend` 和 `frontend`。
+
+### 3. 建立並啟用 Python 環境
+
+`environment.yml` 建立 Python 3.12 環境，但不包含後端套件；接著使用 repository 的鎖定清單安裝精確版本。Conda 環境名稱為 `steam-classroom`，不會安裝到 `base`。
+
+**執行位置：專案根目錄**
+
+```powershell
+conda env create -f environment.yml
+conda activate steam-classroom
+python --version
+python -m pip install -r backend/requirements-lock.txt
+```
+
+若環境已建立，跳過第一行；啟用後 `python --version` 應顯示 Python 3.12。套件安裝完成後，執行 `python -m pip --version` 時顯示的路徑應位於 `steam-classroom` 環境中。
+
+### 4. 建立 PostgreSQL 帳戶及資料庫
+
+請使用 PostgreSQL 安裝時設定的管理員帳戶在 pgAdmin 建立專用應用程式帳戶。不要讓應用程式以 PostgreSQL 管理員身分連線。
+
+1. 在 pgAdmin 連線至 PostgreSQL 伺服器，展開 **Login/Group Roles**，選擇建立登入角色。
+2. 將角色名稱設為 `steam_app`，在密碼欄輸入自己設定的密碼，並允許登入。不要給予 Superuser、建立角色或建立資料庫權限。
+3. 在 pgAdmin 連線到伺服器的 `postgres` 維護資料庫，開啟 Query Tool，執行以下 SQL。執行者需是有建立資料庫權限的管理員；兩個資料庫的 Owner 都設為應用程式帳戶。
+
+```sql
+CREATE DATABASE steam_classroom_dev OWNER steam_app;
+CREATE DATABASE steam_classroom_test OWNER steam_app;
+```
+
+完成後，pgAdmin 的 Databases 清單中應有 `steam_classroom_dev` 和 `steam_classroom_test`。測試資料庫與開發資料庫分開，測試程式只會連接測試資料庫。
+
+### 5. 設定環境變數
+
+**執行位置：專案根目錄**
+
+```powershell
+Copy-Item .env.example .env
+notepad .env
+```
+
+在 `.env` 填入剛設定的 `steam_app` 密碼，並依你的 PostgreSQL 設定確認下列欄位。請保留開發庫和測試庫的名稱，不要將兩者設成同一個資料庫。
+
+| 欄位 | 用途 |
+| --- | --- |
+| `POSTGRES_HOST` | PostgreSQL 主機；本機通常為 `localhost` |
+| `POSTGRES_PORT` | PostgreSQL 連接埠；依安裝時設定填寫 |
+| `POSTGRES_USER` | 應用程式帳戶，預設 `steam_app` |
+| `POSTGRES_PASSWORD` | 你為 `steam_app` 設定的密碼 |
+| `POSTGRES_DB` | 開發資料庫，使用 `steam_classroom_dev` |
+| `POSTGRES_TEST_DB` | 測試資料庫，使用 `steam_classroom_test` |
+
+前端範本 `frontend/.env.example` 已使用本機 API 預設位址 `http://127.0.0.1:8000`，初次使用不需另建前端環境檔。
+
+### 6. 初始化開發資料庫
+
+Alembic 是資料表結構遷移工具。首次啟動前，使用它在開發資料庫建立應用程式所需資料表。指令會明確指定目標為 `dev`。
+
+**執行位置：專案根目錄；先確認已啟用 `steam-classroom` 環境**
+
+```powershell
+$env:PYTHONPATH = "backend"
+python -m alembic -c backend/alembic.ini -x database=dev upgrade head
+```
+
+看到 migration 完成訊息後，開發資料庫即可供後端使用。測試資料庫會在「執行測試」步驟獨立初始化。
+
+### 7. 啟動後端與前端
+
+開啟兩個 PowerShell 視窗，並保持兩個視窗開啟。
+
+**視窗一：後端。執行位置：專案根目錄；先啟用 `steam-classroom` 環境。**
+
+```powershell
+conda activate steam-classroom
+python -m uvicorn app.main:app --app-dir backend --host 127.0.0.1 --port 8000 --reload
+```
+
+看到 Uvicorn 啟動訊息後，API 文件可在 <http://127.0.0.1:8000/docs> 開啟。
+
+**視窗二：前端。執行位置：專案根目錄。**
 
 ```powershell
 cd frontend
-npm install
-npm run typecheck
-npm run build
-```
-
-前端預設 API 位址為 `http://127.0.0.1:8000`。如需改用其他後端位址，複製範本為 `frontend/.env.local` 並修改 `VITE_API_BASE_URL`：
-
-```powershell
-Copy-Item .env.example .env.local
-```
-
-例如將 `VITE_API_BASE_URL` 設為 `http://127.0.0.1:8100`。後端 CORS 目前只允許 `http://127.0.0.1:5173`，不要把允許來源設為萬用字元。
-
-## Database migrations
-
-從專案根目錄執行；先確認目標和 revision，migration 不會在應用程式啟動時自動執行。`20261013_0001` 建立學生表；`20261015_0002` 建立班級及學生註冊表；`20261015_0003` 建立出席紀錄表。
-
-目前 `steam_classroom_dev` 和 `steam_classroom_test` 均已確認在 `20261015_0003`。開發庫在本機資料筆數為 0 時套用 0002、0003；`alembic current` 及 `alembic check` 均已通過。
-
-```powershell
-$env:PYTHONPATH = 'backend'
-& $steamPython -m alembic -c backend/alembic.ini -x database=dev current
-& $steamPython -m alembic -c backend/alembic.ini -x database=dev upgrade head
-& $steamPython -m alembic -c backend/alembic.ini -x database=dev current
-& $steamPython -m alembic -c backend/alembic.ini -x database=dev check
-```
-
-測試庫需要獨立升級：
-
-```powershell
-& $steamPython -m alembic -c backend/alembic.ini -x database=test upgrade head
-& $steamPython -m alembic -c backend/alembic.ini -x database=test current
-```
-
-不要對資料庫執行 downgrade、清空或重建來解決一般設定問題。若 revision 與預期不符，先調查資料庫狀態。
-
-## 啟動服務
-
-開兩個 PowerShell 視窗，工作目錄均為專案根目錄。
-
-視窗一，啟動 FastAPI：
-
-```powershell
-$steamPython = 'C:\Users\User\.conda\envs\steam-classroom\python.exe'
-& $steamPython -m uvicorn app.main:app --app-dir backend --host 127.0.0.1 --port 8000 --reload
-```
-
-API 文件位於 <http://127.0.0.1:8000/docs>；`GET /health` 只表示應用程式正在運作，不代表資料庫連線正常。
-
-視窗二，啟動 React 前端：
-
-```powershell
-cd frontend
+npm ci
 npm run dev -- --host 127.0.0.1
 ```
 
-開啟 <http://127.0.0.1:5173>。Vite 前端只能連到設定的 API 位址；本機 CORS 僅允許 `127.0.0.1:5173`。
+第一次啟動時，`npm ci` 依 `package-lock.json` 安裝前端依賴。Vite 顯示本機網址後，開啟 <http://127.0.0.1:5173>。
 
-## 測試與 build
+## 執行測試
 
-完整後端測試只會使用 `steam_classroom_test`。Fixture 會檢查實際資料庫名稱與 revision，並以 rollback 隔離每個測試。
+後端測試使用獨立的 `steam_classroom_test` 資料庫。先在根目錄啟用 Conda 環境，並將測試資料庫升級至最新資料表版本，再執行測試。
+
+**執行位置：專案根目錄；先啟用 `steam-classroom` 環境**
 
 ```powershell
-# 從專案根目錄
-$steamPython = 'C:\Users\User\.conda\envs\steam-classroom\python.exe'
-& $steamPython -m pytest backend/tests
+conda activate steam-classroom
+$env:PYTHONPATH = "backend"
+python -m alembic -c backend/alembic.ini -x database=test upgrade head
+python -m pytest backend/tests
+```
 
-# 從 frontend 目錄
+測試設定必須在 `.env` 指定 `POSTGRES_TEST_DB=steam_classroom_test`；若缺少或名稱不符，測試會中止，不會改用開發資料庫。資料庫需先建立並由 `steam_app` 擁有。
+
+前端型別檢查與正式建置使用相同的 `build` 指令；`build` 會先執行 TypeScript 型別檢查。
+
+**執行位置：`frontend` 資料夾**
+
+```powershell
 npm run typecheck
 npm run build
 ```
 
-## 3 分鐘展示流程
+## 使用注意
 
-1. 在「學生管理」建立兩位虛構學生，展示姓名與年齡驗證，再修改其中一位資料。
-2. 在「班級管理」建立一個 STEAM 班級，點開班級詳情，將兩位學生加入名單。
-3. 在「出席管理」選擇班級及今天日期，為一位學生新增「出席」，並為另一位新增「遲到」與備註。
-4. 修改其中一筆出席狀態，切回班級頁取消一位學生註冊，再回到出席頁確認歷史資料仍可見。
-5. 可嘗試刪除仍有註冊或出席歷史的學生／班級，展示後端 409 保護。
-
-## 視覺參考與限制
-
-視覺採柔和藍白背景、半透明圓角卡片、細邊框與淺陰影，參考 [Soft UI Evolution](https://github.com/joshhu/uitest/blob/main/styles/19-soft-ui-evolution.html) 的視覺語言；本專案依需求自行實作 CSS，沒有直接複製參考頁程式碼。
-
-目前尚未提供登入、角色權限、課表／多節課出席、功課、學習進度、統計、CSV、雲端部署或 React 路由。學生列表 API 目前回傳完整名冊，前端在頁面上分頁顯示；班級、班級學生及出席列表會逐頁讀取既有 offset／limit API。介面未宣稱符合 WCAG，且本機展示版本沒有公開服務所需的存取控制。
+- 目前沒有登入與權限管理，請限於本機使用，不要直接將服務暴露到公網。
+- `.env` 含本機資料庫密碼，不應提交到 Git；repository 已提供不含真實密碼的 `.env.example`。
+- 每位學生在同一班級、同一天最多一筆出席紀錄，尚未登記不代表缺席。
+- 學生或班級仍有註冊或出席紀錄時，系統會阻止刪除，以保留相關紀錄。
