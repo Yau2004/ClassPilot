@@ -1,0 +1,6 @@
+name: steam-classroom
+channels:
+  - defaults
+dependencies:
+  - python=3.12.15
+  - pip
