@@ -24,8 +24,24 @@ ENV/
 
 # Frontend dependencies and build output
 node_modules/
-dist/
+/dist/
+/frontend/dist/
+/build/
 *.tsbuildinfo
+
+# Local release data, logs, and user-supplied PostgreSQL payload
+/ClassPilotData/
+/ClassPilotLauncher/
+postgresql-*-windows-x64-binaries.zip
+*.log
+*.dump
+*.backup
+
+# Generated packaging test scratch data
+/packaging/.pytest-stage3-temp/
+
+# Local agent skill copy; project guidance lives in AGENTS.md
+/.agents/skills/ponytail/
 
 # Editor and OS files
 .vscode/

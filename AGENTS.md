@@ -1,10 +1,12 @@
 # Project instructions
 
-- Keep this project on Python 3.12 in the `steam-classroom` Conda environment. Do not install project packages in Conda base or create a `.venv`.
+- Development and database-test environment: keep this project on Python 3.12 in the `steam-classroom` Conda environment. Do not install project packages in Conda base or create a `.venv`.
+- Windows release prototype: use a separately pinned packaging-tool lock and a PyInstaller onedir build; do not install packaging tools in Conda base. The release build bundles its Python runtime and does not depend on the user's Conda, Python, Node, or source checkout. The explicitly authorized Stage 2 prototype may bundle the pinned PostgreSQL Windows x64 payload and use only a newly created isolated temporary cluster; it does not authorize a formal installer, use of real LocalAppData, distribution, or connection to existing databases.
+- Keep development and release configuration separate. Development reads the project-root `.env` through the absolute path defined in `backend/app/core/config.py`. A frozen release must never read or fall back to that file. Release configuration and writable state are planned under `%LOCALAPPDATA%\ClassPilot`; this prototype must not create persistent settings, credentials, or database files there.
 - PostgreSQL is the only supported application database. Do not add SQLite or MongoDB fallbacks.
-- Keep database credentials in the project-root `.env`; never print, commit, or copy secret values into code, logs, or examples.
-- Read `.env` through the absolute project-root path defined in `backend/app/core/config.py`.
+- In development, keep database credentials in the project-root `.env`; never print, commit, or copy secret values into code, logs, or examples. Never carry development credentials into a release build.
+- Read the development `.env` through the absolute project-root path defined in `backend/app/core/config.py`. A protected release credential provider is not implemented in this prototype.
 - Keep development and test database URLs separate. Tests that need a database must require `POSTGRES_TEST_DB=steam_classroom_test` and must fail closed when test configuration is missing. Never fall back to the development database.
 - Before test writes or cleanup, verify `current_database()` is exactly `steam_classroom_test` and the expected Alembic revision is applied; keep test writes inside transactions that are rolled back.
-- Use Alembic for schema changes. Require an explicit target and verify the connected database name before migration DDL. Do not apply migrations without explicit task authorization and review.
-- Keep business APIs and the React frontend out of the environment foundation until requested.
+- Use Alembic for schema changes. Require an explicit target and verify the connected database name before migration DDL. Do not apply migrations without explicit task authorization and review. Daily release startup must never run migrations.
+- Include the existing FastAPI application, Alembic resources, and prebuilt React assets in the approved Windows packaging prototype. PostgreSQL packaging and a single explicit migration are authorized only for the isolated Stage 2 prototype database; installer creation and external distribution still require separate approval.

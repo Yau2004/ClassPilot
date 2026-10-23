@@ -1,0 +1,14 @@
+{
+  "product": "ClassPilot Windows Single-user Release (Stage 3 prototype)",
+  "build_id": "classpilot-20261022-data-safety-03",
+  "architecture": "windows-x64",
+  "python": "3.12",
+  "postgresql_version": "18.6",
+  "postgresql_package_revision": "5",
+  "postgresql_payload_mode": "user-selected-zip",
+  "postgresql_spec_file": "postgresql_payload_spec.json",
+  "postgresql_architecture": "windows-x64",
+  "required_alembic_revision": "20261019_0004",
+  "application_database_name": "classpilot",
+  "notes": "PostgreSQL binaries are not bundled. First setup imports a user-selected ZIP and migrates only after explicit confirmation; daily startup never runs migrations. The only allowed install-tree data path is the immediate Data child and it is excluded from updates and uninstall deletion."
+}

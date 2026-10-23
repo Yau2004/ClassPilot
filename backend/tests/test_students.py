@@ -2,8 +2,15 @@ from fastapi.testclient import TestClient
 import pytest
 
 
+def _create_student(client: TestClient, payload: dict[str, object]):
+    return client.post(
+        "/students",
+        json={"gender": "other", "support_need_status": "none_reported", **payload},
+    )
+
+
 def test_create_student_returns_public_fields(client: TestClient) -> None:
-    response = client.post("/students", json={"name": "Mina Chen", "age": 10})
+    response = _create_student(client, {"name": "Mina Chen", "age": 10})
 
     assert response.status_code == 201
     assert set(response.json()) == {"id", "name", "age"}
@@ -13,7 +20,7 @@ def test_create_student_returns_public_fields(client: TestClient) -> None:
 
 
 def test_create_student_trims_name(client: TestClient) -> None:
-    response = client.post("/students", json={"name": "  Kai Wong  ", "age": 12})
+    response = _create_student(client, {"name": "  Kai Wong  ", "age": 12})
 
     assert response.status_code == 201
     assert response.json()["name"] == "Kai Wong"
@@ -23,7 +30,7 @@ def test_create_student_trims_name(client: TestClient) -> None:
 def test_create_student_rejects_invalid_name(
     client: TestClient, name: str
 ) -> None:
-    response = client.post("/students", json={"name": name, "age": 10})
+    response = _create_student(client, {"name": name, "age": 10})
 
     assert response.status_code == 422
 
@@ -32,14 +39,14 @@ def test_create_student_rejects_invalid_name(
 def test_create_student_rejects_age_out_of_range(
     client: TestClient, age: int
 ) -> None:
-    response = client.post("/students", json={"name": "Ari Lau", "age": age})
+    response = _create_student(client, {"name": "Ari Lau", "age": age})
 
     assert response.status_code == 422
 
 
 def test_list_students_returns_id_ordered_results(client: TestClient) -> None:
-    first = client.post("/students", json={"name": "Tao Ho", "age": 8})
-    second = client.post("/students", json={"name": "Ivy Ng", "age": 11})
+    first = _create_student(client, {"name": "Tao Ho", "age": 8})
+    second = _create_student(client, {"name": "Ivy Ng", "age": 11})
 
     response = client.get("/students")
 
@@ -61,7 +68,7 @@ def test_list_students_returns_empty_list_when_none_exist(
 
 
 def test_get_existing_student(client: TestClient) -> None:
-    created = client.post("/students", json={"name": "Nora Yip", "age": 14})
+    created = _create_student(client, {"name": "Nora Yip", "age": 14})
 
     response = client.get(f"/students/{created.json()['id']}")
 
@@ -79,7 +86,7 @@ def test_get_missing_student_returns_clear_404(client: TestClient) -> None:
 
 
 def test_update_student_returns_updated_public_fields(client: TestClient) -> None:
-    created = client.post("/students", json={"name": "Mina Chen", "age": 10})
+    created = _create_student(client, {"name": "Mina Chen", "age": 10})
     student_id = created.json()["id"]
 
     response = client.put(
@@ -120,7 +127,7 @@ def test_update_missing_student_returns_clear_404(client: TestClient) -> None:
 def test_update_student_rejects_invalid_input(
     client: TestClient, student_data: dict[str, object]
 ) -> None:
-    created = client.post("/students", json={"name": "Mina Chen", "age": 10})
+    created = _create_student(client, {"name": "Mina Chen", "age": 10})
 
     response = client.put(f"/students/{created.json()['id']}", json=student_data)
 
@@ -130,7 +137,7 @@ def test_update_student_rejects_invalid_input(
 def test_delete_student_returns_no_content_and_removes_student(
     client: TestClient,
 ) -> None:
-    created = client.post("/students", json={"name": "Ivy Ng", "age": 11})
+    created = _create_student(client, {"name": "Ivy Ng", "age": 11})
     student_id = created.json()["id"]
 
     response = client.delete(f"/students/{student_id}")

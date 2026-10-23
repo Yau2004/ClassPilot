@@ -62,7 +62,12 @@ def create_attendance(
     session: SessionDependency,
 ) -> AttendanceRecord:
     require_classroom(class_id, session)
-    require_student(attendance_data.student_id, session)
+    student = require_student(attendance_data.student_id, session)
+    if student.is_archived:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Archived student {attendance_data.student_id} cannot receive new attendance records.",
+        )
 
     enrollment = session.get(
         StudentClassEnrollment,

@@ -158,7 +158,12 @@ def enroll_student(
     session: SessionDependency,
 ) -> dict[str, int]:
     get_classroom_or_404(class_id, session)
-    get_student_or_404(student_id, session)
+    student = get_student_or_404(student_id, session)
+    if student.is_archived:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Archived student {student_id} cannot be enrolled in a class.",
+        )
 
     enrollment_key = (student_id, class_id)
     if session.get(StudentClassEnrollment, enrollment_key) is not None:

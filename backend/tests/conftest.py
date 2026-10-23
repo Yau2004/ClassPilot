@@ -3,14 +3,37 @@ from collections.abc import Generator
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import text
+from sqlalchemy.exc import SQLAlchemyError
 from sqlmodel import Session
 
 from app.core.config import TEST_DATABASE_NAME, get_settings
+from app.db.diagnostics import redact_diagnostic_text, safe_database_error_summary
 from app.db.session import create_database_engine, get_session
 from app.main import app
 
 _NO_OVERRIDE = object()
-EXPECTED_TEST_SCHEMA_REVISION = "20261015_0003"
+EXPECTED_TEST_SCHEMA_REVISION = "20261019_0004"
+
+
+@pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_makereport(item, call):
+    outcome = yield
+    report = outcome.get_result()
+    try:
+        password = get_settings().postgres_password.get_secret_value()
+    except Exception:
+        password = ""
+    if not password:
+        return
+
+    for index, (section_name, captured) in enumerate(report.sections):
+        if captured:
+            report.sections[index] = (
+                section_name,
+                redact_diagnostic_text(captured, [password]),
+            )
+    if report.longrepr is not None:
+        report.longrepr = redact_diagnostic_text(str(report.longrepr), [password])
 
 
 @pytest.fixture
@@ -82,5 +105,7 @@ def client() -> Generator[TestClient, None, None]:
                             "database is not steam_classroom_test."
                         )
                     outer_transaction.rollback()
+    except SQLAlchemyError as error:
+        raise RuntimeError(safe_database_error_summary(error)) from None
     finally:
         engine.dispose()

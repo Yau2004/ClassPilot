@@ -8,7 +8,7 @@ from app.main import app
 
 
 def create_enrolled_student(client: TestClient) -> tuple[int, int]:
-    student = client.post("/students", json={"name": "Mina Chen", "age": 10})
+    student = client.post("/students", json={"name": "Mina Chen", "age": 10, "gender": "other", "support_need_status": "none_reported"})
     classroom = client.post(
         "/classes", json={"name": "Robotics", "description": "Build robots"}
     )
@@ -150,7 +150,7 @@ def test_attendance_list_filters_by_date_and_student_with_stable_paging(
     client: TestClient,
 ) -> None:
     first_student, class_id = create_enrolled_student(client)
-    second = client.post("/students", json={"name": "Ivy Ng", "age": 11}).json()
+    second = client.post("/students", json={"name": "Ivy Ng", "age": 11, "gender": "other", "support_need_status": "none_reported"}).json()
     assert client.post(
         f"/classes/{class_id}/students/{second['id']}"
     ).status_code == 201

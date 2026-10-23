@@ -1,121 +1,60 @@
 # ClassPilot
 
-ClassPilot 是一個以繁體中文呈現的本機 STEAM 課堂管理作品集 MVP。它把學生、班級、註冊及每日出席流程整理成可操作的管理介面，方便在本機展示完整資料流程。
+ClassPilot 是配合教育中心小班 STEAM 授課工作的本機課堂管理工具，協助整理學生資料、安排課節與時間表，並記錄每堂課的出席和課後評價。使用者透過 Windows 控制程式啟動，再於瀏覽器操作；目前不是公開託管的線上服務。
 
-## MVP 範圍
+## 畫面預覽
 
-- 學生管理：列表、新增、修改、刪除；學生資料按前端頁面分頁顯示。
-- 班級管理：列表、新增、修改、刪除；檢視學生名單、加入學生及取消註冊。
-- 出席管理：選擇班級與本機日期、新增及檢視紀錄、修改狀態／備註及刪除。
-- 後端提供 FastAPI／SQLModel API，PostgreSQL 儲存資料，Alembic 管理 schema。
-- 前端使用 React、TypeScript、Vite 和一般 CSS；桌面側欄在窄螢幕縮成精簡導覽。
+截圖待補。
 
-這是本機展示 MVP，尚無身分驗證或權限保護，不可當作具有安全存取控制的公開服務。系統目前以「同一班級、同一學生、同一日期最多一筆」管理出席，不支援同日多節課或課堂場次。未登記的學生不會自動視為缺席。取消註冊會保留出席歷史；有註冊或出席歷史時，學生與班級的刪除會被拒絕。
+<!-- 預留：Windows 控制程式及首次設定畫面 -->
+<!-- 預留：瀏覽器課程日程及學生管理畫面 -->
 
-## 技術架構
+## 主要功能
 
-- Backend：Python 3.12、FastAPI、SQLModel、Pydantic Settings、SQLAlchemy、psycopg、Alembic。
-- Database：PostgreSQL，開發庫 `steam_classroom_dev`、測試庫 `steam_classroom_test`。
-- Frontend：React、TypeScript、Vite、CSS variables。
-- Tests：pytest、FastAPI TestClient、httpx；前端提供 TypeScript 型別檢查及 Vite production build。
+- 管理學生資料、教學支援需要及教學注意事項。
+- 以月曆查看課節，為同一學生安排多個上課時段。
+- 分別記錄每堂課的出席狀態和課後評價。
+- 透過 Windows 控制程式啟動或停止本機服務。
+- 選擇本機資料位置；卸載程式時預設保留使用者資料。
 
-## Windows PowerShell 設定
+## 使用技術
 
-以下命令從專案根目錄 `D:\ProgramData\Codex Project\ClassPilot` 執行。後端使用既有 Conda 環境，不使用 base 或 `.venv`：
+- **前端：** React、TypeScript、Vite。
+- **後端：** Python 3.12、FastAPI、SQLModel。
+- **資料庫：** PostgreSQL；使用 Alembic 管理 schema。
+- **Windows 發行：** PyInstaller onedir、Inno Setup。
 
-```powershell
-$steamPython = 'C:\Users\User\.conda\envs\steam-classroom\python.exe'
-& $steamPython --version
-```
+## 安裝與使用
 
-專案根目錄 `.env` 由後端按絕對路徑載入。請在本機自行填寫資料庫密碼；不要把 `.env` 加入版本控制。測試設定必須指定 `POSTGRES_TEST_DB=steam_classroom_test`，不可改用開發庫。環境範本位於 [.env.example](.env.example)，前端範本位於 [frontend/.env.example](frontend/.env.example)，前端檔案只設定 API 位址，不放資料庫憑證。
+發行目標為 Windows x64；專案目前未明確列出最低 Windows 版本。請前往 [GitHub Releases](https://github.com/Yau2004/ClassPilot/releases) 下載 `ClassPilotSetup.exe`。
 
-首次使用時，在專案根目錄安裝前端本機依賴：
+### 首次設定
 
-```powershell
-cd frontend
-npm install
-npm run typecheck
-npm run build
-```
+1. 從 GitHub Releases 下載並執行 `ClassPilotSetup.exe`。目前安裝器採目前 Windows 使用者安裝，不要求管理員權限；可選擇程式安裝位置，預設為 `%LOCALAPPDATA%\Programs\ClassPilot`。
+2. 從 [PostgreSQL 官方 Windows 下載頁](https://www.postgresql.org/download/windows/)進入下載頁，手動取得支援的 PostgreSQL 18.6、package revision 5、Windows x64 binaries ZIP：`postgresql-18.6-5-windows-x64-binaries.zip`。ZIP 不包含在安裝檔內。
+3. 開啟 ClassPilot，選取 ZIP 及資料位置。預設資料位置為 `%LOCALAPPDATA%\ClassPilot`，與程式安裝位置分開；確認後，程式會檢查檔案並建立專用資料環境及所需 schema。
+4. 設定完成後按「啟動」，待服務就緒便會開啟瀏覽器。
 
-前端預設 API 位址為 `http://127.0.0.1:8000`。如需改用其他後端位址，複製範本為 `frontend/.env.local` 並修改 `VITE_API_BASE_URL`：
+### 之後使用
 
-```powershell
-Copy-Item .env.example .env.local
-```
+- 開啟桌面或開始功能表中的 ClassPilot。
+- 按「啟動」使用課程日程及學生管理。
+- 完成後按「停止並關閉」。日常啟動不會安裝依賴、重新建置或執行 migration。
 
-例如將 `VITE_API_BASE_URL` 設為 `http://127.0.0.1:8100`。後端 CORS 目前只允許 `http://127.0.0.1:5173`，不要把允許來源設為萬用字元。
+### 重要限制與更新
 
-## Database migrations
+- 目前只支援 Windows x64。安裝、暫存、PostgreSQL 執行檔及資料等相關路徑不可含中文、日文或韓文；設定時會檢查並在初始化前停止。路徑含空格可用。
+- 資料位置須是本機固定磁碟，並由目前使用者以一般權限寫入。可選擇自訂位置；若程式安裝在 `Program Files`，該位置通常不能寫入。資料可放在安裝目錄內的 `Data` 子目錄，但仍須通過一般使用者權限檢查。
+- PostgreSQL ZIP 需要使用者手動下載及選取。若缺少必要的 Microsoft runtime，設定會停止並提供處理指引；ClassPilot 不會自行安裝系統 runtime。
+- 這是本機使用工具，不提供雲端同步或跨電腦資料共享。DPAPI 保護的憑證亦不能只靠複製資料夾移到另一個 Windows 帳戶或電腦使用。
+- 卸載預設保留資料。搬移現有資料及自動更新目前未提供；安裝器會阻止直接覆寫既有安裝。重新安裝或版本更新前，請按[Windows 發行與更新指南](docs/WINDOWS_RELEASE_GUIDE.md)操作，並保留資料目錄及位置記錄。
 
-從專案根目錄執行；先確認目標和 revision，migration 不會在應用程式啟動時自動執行。`20261013_0001` 建立學生表；`20261015_0002` 建立班級及學生註冊表；`20261015_0003` 建立出席紀錄表。
+完整操作及排錯：
 
-目前 `steam_classroom_dev` 和 `steam_classroom_test` 均已確認在 `20261015_0003`。開發庫在本機資料筆數為 0 時套用 0002、0003；`alembic current` 及 `alembic check` 均已通過。
+- [Windows 發行、首次設定、更新與卸載](docs/WINDOWS_RELEASE_GUIDE.md)
+- [開發環境常見錯誤與安全診斷](docs/TROUBLESHOOTING.md)（開發者）
+- [開發與測試環境](docs/DEVELOPMENT_TESTING.md)（開發者）
 
-```powershell
-$env:PYTHONPATH = 'backend'
-& $steamPython -m alembic -c backend/alembic.ini -x database=dev current
-& $steamPython -m alembic -c backend/alembic.ini -x database=dev upgrade head
-& $steamPython -m alembic -c backend/alembic.ini -x database=dev current
-& $steamPython -m alembic -c backend/alembic.ini -x database=dev check
-```
+## 開發動機
 
-測試庫需要獨立升級：
-
-```powershell
-& $steamPython -m alembic -c backend/alembic.ini -x database=test upgrade head
-& $steamPython -m alembic -c backend/alembic.ini -x database=test current
-```
-
-不要對資料庫執行 downgrade、清空或重建來解決一般設定問題。若 revision 與預期不符，先調查資料庫狀態。
-
-## 啟動服務
-
-開兩個 PowerShell 視窗，工作目錄均為專案根目錄。
-
-視窗一，啟動 FastAPI：
-
-```powershell
-$steamPython = 'C:\Users\User\.conda\envs\steam-classroom\python.exe'
-& $steamPython -m uvicorn app.main:app --app-dir backend --host 127.0.0.1 --port 8000 --reload
-```
-
-API 文件位於 <http://127.0.0.1:8000/docs>；`GET /health` 只表示應用程式正在運作，不代表資料庫連線正常。
-
-視窗二，啟動 React 前端：
-
-```powershell
-cd frontend
-npm run dev -- --host 127.0.0.1
-```
-
-開啟 <http://127.0.0.1:5173>。Vite 前端只能連到設定的 API 位址；本機 CORS 僅允許 `127.0.0.1:5173`。
-
-## 測試與 build
-
-完整後端測試只會使用 `steam_classroom_test`。Fixture 會檢查實際資料庫名稱與 revision，並以 rollback 隔離每個測試。
-
-```powershell
-# 從專案根目錄
-$steamPython = 'C:\Users\User\.conda\envs\steam-classroom\python.exe'
-& $steamPython -m pytest backend/tests
-
-# 從 frontend 目錄
-npm run typecheck
-npm run build
-```
-
-## 3 分鐘展示流程
-
-1. 在「學生管理」建立兩位虛構學生，展示姓名與年齡驗證，再修改其中一位資料。
-2. 在「班級管理」建立一個 STEAM 班級，點開班級詳情，將兩位學生加入名單。
-3. 在「出席管理」選擇班級及今天日期，為一位學生新增「出席」，並為另一位新增「遲到」與備註。
-4. 修改其中一筆出席狀態，切回班級頁取消一位學生註冊，再回到出席頁確認歷史資料仍可見。
-5. 可嘗試刪除仍有註冊或出席歷史的學生／班級，展示後端 409 保護。
-
-## 視覺參考與限制
-
-視覺採柔和藍白背景、半透明圓角卡片、細邊框與淺陰影，參考 [Soft UI Evolution](https://github.com/joshhu/uitest/blob/main/styles/19-soft-ui-evolution.html) 的視覺語言；本專案依需求自行實作 CSS，沒有直接複製參考頁程式碼。
-
-目前尚未提供登入、角色權限、課表／多節課出席、功課、學習進度、統計、CSV、雲端部署或 React 路由。學生列表 API 目前回傳完整名冊，前端在頁面上分頁顯示；班級、班級學生及出席列表會逐頁讀取既有 offset／limit API。介面未宣稱符合 WCAG，且本機展示版本沒有公開服務所需的存取控制。
+我在教育中心授課時，需要整理學生資料和上課時間表。每堂課可能有不同學生、教學內容與上課時間，因此我希望有一個更貼近實際工作的工具，把排課、學生資料、出席和課後評價集中管理，減少來回查找資料的時間。

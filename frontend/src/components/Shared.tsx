@@ -9,7 +9,7 @@ export function Panel({ title, description, action, children, className = '' }: 
   </section>
 }
 
-export function Notice({ kind = 'error', children, onClose }: { kind?: 'error' | 'success'; children: string; onClose?: () => void }) {
+export function Notice({ kind = 'error', children, onClose }: { kind?: 'error' | 'success'; children: ReactNode; onClose?: () => void }) {
   return <div className={`notice notice-${kind}`} role="status"><span>{children}</span>{onClose && <button className="icon-button" onClick={onClose} aria-label="關閉提示">×</button>}</div>
 }
 

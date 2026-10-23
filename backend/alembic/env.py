@@ -3,11 +3,14 @@ from sqlalchemy import create_engine, pool, text
 from sqlmodel import SQLModel
 
 from app.core.config import TEST_DATABASE_NAME, get_settings
+from app.core.runtime import RUNTIME_PATHS
 from app.models import (  # noqa: F401 - registers SQLModel metadata
     AttendanceRecord,
     Classroom,
+    LessonSession,
     Student,
     StudentClassEnrollment,
+    SessionParticipant,
 )
 
 config = context.config
@@ -16,9 +19,9 @@ target_metadata = SQLModel.metadata
 
 def get_database_target() -> str:
     target = context.get_x_argument(as_dictionary=True).get("database")
-    if target not in {"dev", "test"}:
+    if target not in {"dev", "test", "release"}:
         raise ValueError(
-            "Choose an explicit migration target with -x database=dev or -x database=test."
+            "Choose an explicit migration target with -x database=dev, test, or release."
         )
     return target
 
@@ -37,10 +40,15 @@ def run_migrations_offline() -> None:
 
 def run_migrations_online() -> None:
     target = get_database_target()
+    if target == "release" and not RUNTIME_PATHS.frozen:
+        raise ValueError("The release migration target is available only in a frozen runtime.")
     settings = get_settings()
-    expected_database = (
-        settings.postgres_db if target == "dev" else TEST_DATABASE_NAME
-    )
+    if target == "dev":
+        expected_database = settings.postgres_db
+    elif target == "test":
+        expected_database = TEST_DATABASE_NAME
+    else:
+        expected_database = settings.postgres_db
     engine = create_engine(
         settings.database_url(target), poolclass=pool.NullPool
     )

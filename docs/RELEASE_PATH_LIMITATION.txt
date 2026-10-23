@@ -1,0 +1,7 @@
+ClassPilot 首次設定路徑限制
+
+目前 PostgreSQL Windows binaries 的 initdb.exe 在包含中文、日文或韓文的路徑中無法可靠初始化資料庫。ClassPilot 會在初始化前檢查安裝、PostgreSQL executable、解壓、使用者資料及暫存路徑；發現不支援路徑時會顯示完整路徑並停止。路徑含空格可使用。
+
+如果 Windows 使用者名稱含中文字，預設的 %LOCALAPPDATA%\ClassPilot 也會含中文字，因此此版本不支援該使用者設定。請停止設定並聯絡維護者；目前沒有安全的路徑繞過方式。ClassPilot 不會改用共用系統位置、修改帳戶或要求管理員權限。
+
+此限制也適用於解壓與 PostgreSQL 資料位置。請勿手動移動或重新命名既有資料庫目錄來繞過檢查；請先聯絡維護者。
